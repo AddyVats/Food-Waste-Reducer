@@ -68,8 +68,9 @@ export function bestBatch(mu, sd, cu, co) {
   return stats(lo + 1, p).cost < stats(lo, p).cost ? lo + 1 : lo;
 }
 
-// Accepts plain decimal numbers only (rejects hex, "Infinity", "NaN", etc.).
-var NUMBER_RE = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+// Accepts plain decimal numbers only (rejects hex, "Infinity", "NaN", scientific notation, etc.).
+// Scientific notation (e.g., 1e3) is rejected because it's not intuitive for kitchen staff.
+var NUMBER_RE = /^[+-]?(\d+\.?\d*|\.\d+)$/;
 
 export function parseNumber(text) {
   var s = String(text === undefined || text === null ? "" : text).trim();

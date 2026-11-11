@@ -121,7 +121,7 @@ test("decimal demand and spread are accepted", () => {
   assert.equal(r.values.sd, 12.25);
 });
 test("extremely large values are rejected", () => {
-  assert.match(validateInputs(withField("mu", "1e9")).errors.mu, /above the limit/);
+  assert.match(validateInputs(withField("mu", "1000000000")).errors.mu, /above the limit/);
   assert.equal(validateInputs(withField("mu", "1000000")).ok, true);
 });
 test("non-numeric text is rejected, including hex and Infinity", () => {
@@ -129,11 +129,14 @@ test("non-numeric text is rejected, including hex and Infinity", () => {
     assert.match(validateInputs(withField("cu", bad)).errors.cu, /plain number/, bad);
   }
 });
-test("parseNumber accepts plain decimals and exponents only", () => {
+test("parseNumber accepts plain decimals only", () => {
   assert.deepEqual(parseNumber(" 12.5 "), { status: "ok", value: 12.5 });
   assert.deepEqual(parseNumber(".5"), { status: "ok", value: 0.5 });
-  assert.deepEqual(parseNumber("1e3"), { status: "ok", value: 1000 });
+  assert.deepEqual(parseNumber("1000"), { status: "ok", value: 1000 });
   assert.equal(parseNumber("").status, "empty");
+  assert.equal(parseNumber("1e3").status, "invalid");
+  assert.equal(parseNumber("1E3").status, "invalid");
+  assert.equal(parseNumber("1.5e2").status, "invalid");
 });
 test("warns when the bell-curve model predicts noticeable negative demand", () => {
   const r = validateInputs({ ...base, mu: "10", sd: "30" });

@@ -21,6 +21,7 @@ function makeEl(id) {
 globalThis.document = {
   getElementById: (id) => (store[id] ??= makeEl(id)),
   createElement: (tag) => { const n = makeEl(tag); n.tag = tag; n.id = ""; return n; },
+  createElementNS: (ns, tag) => { const n = makeEl(tag); n.tag = tag; n.ns = ns; n.id = ""; return n; },
 };
 await import("../public/js/app.js");
 

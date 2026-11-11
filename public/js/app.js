@@ -64,7 +64,7 @@ function showErrors(r) {
 function clearResults() {
   $("kpis").replaceChildren();
   $("why").textContent = "";
-  $("chart").innerHTML = "";
+  $("chart").replaceChildren();
 }
 
 function updateSource() {
@@ -108,7 +108,7 @@ function render() {
   return { p: p, Q: Q };
 }
 
-// Chart values are numbers and fixed strings only, so innerHTML is safe here.
+// ---------- chart using DOM methods (no innerHTML) ----------
 function chart(p, Q) {
   var lo = Math.max(0, p.mu - 3 * p.sd), hi = p.mu + 3 * p.sd, N = 60, pts = [], mx = 0, i;
   for (i = 0; i <= N; i++) {
@@ -120,20 +120,91 @@ function chart(p, Q) {
   var W = 640, H = 260, L = 48, R = 16, T = 16, B = 36;
   var X = function (v) { return L + ((v - lo) / (hi - lo)) * (W - L - R); };
   var Y = function (v) { return H - B - (v / mx) * (H - B - T); };
+
+  var svgNS = "http://www.w3.org/2000/svg";
+  var svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 640 260");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Expected daily cost against portions cooked");
+
+  // X axis
+  var xAxis = document.createElementNS(svgNS, "line");
+  xAxis.setAttribute("x1", L);
+  xAxis.setAttribute("y1", H - B);
+  xAxis.setAttribute("x2", W - R);
+  xAxis.setAttribute("y2", H - B);
+  xAxis.setAttribute("style", "stroke:var(--line)");
+  svg.appendChild(xAxis);
+
+  // Y axis
+  var yAxis = document.createElementNS(svgNS, "line");
+  yAxis.setAttribute("x1", L);
+  yAxis.setAttribute("y1", T);
+  yAxis.setAttribute("x2", L);
+  yAxis.setAttribute("y2", H - B);
+  yAxis.setAttribute("style", "stroke:var(--line)");
+  svg.appendChild(yAxis);
+
+  // Cost curve path
   var d = pts.map(function (q, k) { return (k ? "L" : "M") + X(q[0]).toFixed(1) + " " + Y(q[1]).toFixed(1); }).join("");
-  var s = '<line x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '" style="stroke:var(--line)"/>' +
-    '<line x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (H - B) + '" style="stroke:var(--line)"/>';
-  s += '<path d="' + d + '" fill="none" style="stroke:var(--blue)" stroke-width="2.5"/>';
+  var path = document.createElementNS(svgNS, "path");
+  path.setAttribute("d", d);
+  path.setAttribute("fill", "none");
+  path.setAttribute("style", "stroke:var(--blue); stroke-width:2.5");
+  svg.appendChild(path);
+
+  // Current and best batch markers
   [[p.cur, "current", "var(--amber)", 14], [Q, "best", "var(--green)", 30]].forEach(function (m) {
     if (m[0] < lo || m[0] > hi) return;
     var cx = X(m[0]);
-    s += '<line x1="' + cx + '" y1="' + T + '" x2="' + cx + '" y2="' + (H - B) + '" style="stroke:' + m[2] + '" stroke-width="2" stroke-dasharray="5 4"/>' +
-      '<circle cx="' + cx + '" cy="' + Y(stats(m[0], p).cost) + '" r="5" style="fill:' + m[2] + '"/>' +
-      '<text x="' + (cx + 6) + '" y="' + (T + m[3]) + '" style="fill:' + m[2] + '" font-size="13">' + m[1] + " " + Math.round(m[0]) + "</text>";
+    var cy = Y(stats(m[0], p).cost);
+
+    // Vertical line
+    var vLine = document.createElementNS(svgNS, "line");
+    vLine.setAttribute("x1", cx);
+    vLine.setAttribute("y1", T);
+    vLine.setAttribute("x2", cx);
+    vLine.setAttribute("y2", H - B);
+    vLine.setAttribute("style", "stroke:" + m[2] + "; stroke-width:2; stroke-dasharray:5 4");
+    svg.appendChild(vLine);
+
+    // Circle marker
+    var circle = document.createElementNS(svgNS, "circle");
+    circle.setAttribute("cx", cx);
+    circle.setAttribute("cy", cy);
+    circle.setAttribute("r", "5");
+    circle.setAttribute("style", "fill:" + m[2]);
+    svg.appendChild(circle);
+
+    // Label
+    var text = document.createElementNS(svgNS, "text");
+    text.setAttribute("x", cx + 6);
+    text.setAttribute("y", T + m[3]);
+    text.setAttribute("style", "fill:" + m[2] + "; font-size:13");
+    text.textContent = m[1] + " " + Math.round(m[0]);
+    svg.appendChild(text);
   });
-  s += '<text x="' + (W / 2) + '" y="' + (H - 8) + '" text-anchor="middle" style="fill:var(--mute)" font-size="12">portions cooked</text>' +
-    '<text x="14" y="' + (H / 2) + '" style="fill:var(--mute)" font-size="12" transform="rotate(-90 14 ' + (H / 2) + ')" text-anchor="middle">expected cost per day</text>';
-  $("chart").innerHTML = s;
+
+  // X axis label
+  var xLabel = document.createElementNS(svgNS, "text");
+  xLabel.setAttribute("x", W / 2);
+  xLabel.setAttribute("y", H - 8);
+  xLabel.setAttribute("text-anchor", "middle");
+  xLabel.setAttribute("style", "fill:var(--mute); font-size:12");
+  xLabel.textContent = "portions cooked";
+  svg.appendChild(xLabel);
+
+  // Y axis label
+  var yLabel = document.createElementNS(svgNS, "text");
+  yLabel.setAttribute("x", 14);
+  yLabel.setAttribute("y", H / 2);
+  yLabel.setAttribute("style", "fill:var(--mute); font-size:12");
+  yLabel.setAttribute("transform", "rotate(-90 14 " + (H / 2) + ")");
+  yLabel.setAttribute("text-anchor", "middle");
+  yLabel.textContent = "expected cost per day";
+  svg.appendChild(yLabel);
+
+  $("chart").replaceChildren(svg);
 }
 
 // ---------- simulation ----------

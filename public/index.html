@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Find how many portions a dining hall should cook to cut food waste, using the newsvendor model.">
+<title>Dining Hall Food Waste Reducer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main>
+<h1>How many portions should the kitchen cook?</h1>
+<p class="lede">Cooking exactly the average is a mistake: running out of a dish costs more than wasting one portion. This tool finds the batch size that minimises total cost, and shows what that saves over your current practice.</p>
+
+<section>
+<h2>1. Describe one dish</h2>
+<div class="grid">
+<label>Dish name<input id="name" value="Rajma chawal" maxlength="60"></label>
+<label>Average daily demand (portions)<input id="mu" type="number" value="200" inputmode="decimal" step="any"></label>
+<label>Day-to-day spread, std. dev.<input id="sd" type="number" value="30" inputmode="decimal" step="any"></label>
+<label>Cost of running out, per portion<input id="cu" type="number" value="5" inputmode="decimal" step="any"></label>
+<label>Cost of one wasted portion<input id="co" type="number" value="1" inputmode="decimal" step="any"></label>
+<label>Portions you cook now<input id="cur" type="number" value="200" inputmode="numeric" step="1"></label>
+<label>Serving days per year<input id="days" type="number" value="200" inputmode="numeric" step="1"></label>
+</div>
+<div id="errors" class="msg" role="alert" hidden></div>
+<label style="margin-top:14px">Or paste past daily demand (portions sold plus any left over, separated by commas or spaces; at least 5 days)
+<textarea id="hist" placeholder="188, 215, 172, 240, 201, 195, 230"></textarea></label>
+<button id="fit" class="alt">Estimate average and spread from this data</button>
+<p class="note" id="fitmsg" aria-live="polite"></p>
+<div id="pending" class="pending" hidden></div>
+<p class="note" id="source"></p>
+</section>
+
+<section>
+<h2>2. Recommended batch size</h2>
+<div id="warnings" class="msg warn" hidden></div>
+<div class="grid" id="kpis"></div>
+<p class="note" id="why" style="margin-top:14px"></p>
+<div style="margin-top:10px"><svg id="chart" viewBox="0 0 640 260" role="img" aria-label="Expected daily cost against portions cooked"></svg></div>
+</section>
+
+<section>
+<h2>3. Test it on simulated days</h2>
+<p class="note">Draws random daily demand from your numbers and replays both policies on the same days.</p>
+<div class="grid" style="max-width:420px"><label>Days to simulate<input id="n" type="number" value="60" inputmode="numeric" step="1"></label></div>
+<p class="msg" id="simerr" role="alert" hidden></p>
+<button id="run">Run simulation</button>
+<p class="note">Demand is drawn from the same bell-curve model as the formulas above, so results agree with section 2 apart from random variation.</p>
+<div class="scroll" style="margin-top:12px"><table id="simtab"></table></div>
+</section>
+
+<section>
+<h2>How the maths works</h2>
+<p class="note">Let D be demand with mean μ and spread σ, and Q the portions cooked. Shortage cost per portion is c<sub>u</sub> and waste cost is c<sub>o</sub>. The expected cost is minimised where the chance of covering demand equals the critical ratio:</p>
+<p><code>F(Q*) = c<sub>u</sub> / (c<sub>u</sub> + c<sub>o</sub>)</code> so <code>Q* = μ + z·σ</code>, with z = Φ<sup>−1</sup>(critical ratio).</p>
+<p class="note">Expected leftovers are σ[zΦ(z) + φ(z)] and expected shortfall is σ[φ(z) − z(1 − Φ(z))], where φ and Φ are the standard normal density and cumulative distribution. Limits: demand is assumed roughly normal, and Q must be a whole number of portions, so the best batch is the better of the two whole numbers either side of the continuous optimum, and sales records hide demand on days when the dish sold out, so include those days with an estimate or treat the average as a lower bound.</p>
+</section>
+</main>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

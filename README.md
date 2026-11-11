@@ -1,6 +1,6 @@
 # Dining Hall Food Waste Reducer
 
-[![CI](https://github.com/YOUR-USERNAME/food-waste-reducer/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USERNAME/food-waste-reducer/actions/workflows/ci.yml)
+[![CI](https://github.com/AddyVats/food-waste-reducer/actions/workflows/ci.yml/badge.svg)](https://github.com/AddyVats/food-waste-reducer/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -20,7 +20,7 @@ It ships as three parts that share the same maths:
 ## Run it locally
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/food-waste-reducer.git
+git clone https://github.com/AddyVats/food-waste-reducer.git
 cd food-waste-reducer
 
 # website (no build step)
